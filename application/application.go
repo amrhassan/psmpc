@@ -19,7 +19,8 @@ func NewApplication() *Application {
 }
 
 func (this *Application) Run() {
-	player := mpd.Connect()
+	player := mpd.NewPlayer()
+	player.Connect()
 	defer player.Disconnect()
 
 	go this.gui.Run()
