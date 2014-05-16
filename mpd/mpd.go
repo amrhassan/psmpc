@@ -2,15 +2,20 @@ package mpd
 
 import (
 	"code.google.com/p/gompd/mpd"
+	"container/list"
 	"errors"
 	"github.com/amrhassan/psmpc/mpdinfo"
 )
 
 type Player struct {
-	client   *mpd.Client
-	hostname string
-	port     uint
+	client         *mpd.Client
+	hostname       string
+	port           uint
+	changeHandlers *list.List
+	watcher        *mpd.Watcher
 }
+
+type ChangeHandler func()
 
 var playerNotConnectedError = errors.New("This player is not connected")
 
@@ -21,17 +26,36 @@ func NewPlayer() *Player {
 	port := uint(6600)
 
 	return &Player{
-		client:   nil,
-		hostname: hostname,
-		port:     port,
+		client:         nil,
+		hostname:       hostname,
+		port:           port,
+		changeHandlers: list.New(),
 	}
 }
 
 // Connects to the MPD server.
 func (this *Player) Connect() error {
-	client, error := mpd.Dial("tcp", "localhost:6600")
+	client, err := mpd.Dial("tcp", "localhost:6600")
+	if err != nil {
+		return err
+	}
+
 	this.client = client
-	return error
+	watcher, err := mpd.NewWatcher("tcp", "localhost:6600", "")
+	if err != nil {
+		return err
+	}
+	this.watcher = watcher
+
+	go func() {
+		for _ = range this.watcher.Event {
+			for e := this.changeHandlers.Front(); e != nil; e = e.Next() {
+				e.Value.(ChangeHandler)()
+			}
+		}
+	}()
+
+	return nil
 }
 
 // Returns true if this Player is connected to its server
@@ -109,4 +133,8 @@ func (this *Player) Previous() error {
 	}
 
 	return this.client.Previous()
+}
+
+func (this *Player) RegisterChangeHandler(changeHandler ChangeHandler) {
+	this.changeHandlers.PushFront(changeHandler)
 }
