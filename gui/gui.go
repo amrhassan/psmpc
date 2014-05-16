@@ -28,6 +28,8 @@ type GUI struct {
 	main_window                *gtk.Window
 	title_label                *gtk.Label
 	artist_label               *gtk.Label
+	stopped_header             *gtk.Box
+	playback_header            *gtk.Box
 	registered_action_handlers map[Action]*list.List
 }
 
@@ -68,11 +70,25 @@ func NewGUI() *GUI {
 	}
 	title_label := title_label_gobject.(*gtk.Label)
 
+	stopped_header_gobject, err := builder.GetObject("stopped_header_box")
+	if err != nil {
+		error_panic("Failed to retrieve stopped_header_box gobject", err)
+	}
+	stopped_header := stopped_header_gobject.(*gtk.Box)
+
+	playback_header_gobject, err := builder.GetObject("playback_header_box")
+	if err != nil {
+		error_panic("Failed to retrieve playback_header_box", err)
+	}
+	playback_header := playback_header_gobject.(*gtk.Box)
+
 	return &GUI{
 		builder:                    builder,
 		main_window:                main_window,
 		title_label:                title_label,
 		artist_label:               artist_label,
+		stopped_header:             stopped_header,
+		playback_header:            playback_header,
 		registered_action_handlers: make(map[Action]*list.List),
 	}
 }
@@ -112,6 +128,17 @@ func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 
 	if current_song.Artist != "" {
 		this.artist_label.SetText(current_song.Artist)
+	}
+}
+
+// Updates the GUI with the current MPD status
+func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
+	if current_status.State == mpdinfo.STATE_STOPPED {
+		this.stopped_header.Show()
+		this.playback_header.Hide()
+	} else {
+		this.stopped_header.Hide()
+		this.playback_header.Show()
 	}
 }
 

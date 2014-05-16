@@ -19,7 +19,9 @@ func main() {
 
 	for {
 		current_song, _ := player.GetCurrentSong()
+		status, _ := player.GetStatus()
 		g.UpdateCurrentSong(current_song)
+		g.UpdateCurrentStatus(status)
 		time.Sleep(1 * time.Second)
 	}
 }
