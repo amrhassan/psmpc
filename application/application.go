@@ -7,12 +7,14 @@ import (
 )
 
 type Application struct {
-	gui *gui.GUI
+	gui           *gui.GUI
+	quitRequested bool
 }
 
 func NewApplication() *Application {
 	return &Application{
-		gui: gui.NewGUI(),
+		gui:           gui.NewGUI(),
+		quitRequested: false,
 	}
 }
 
@@ -21,6 +23,7 @@ func (this *Application) Run() {
 	defer player.Disconnect()
 
 	go this.gui.Run()
+	defer this.gui.Quit()
 
 	this.gui.RegisterActionHandler(gui.ACTION_PLAYPAUSE, func(args []interface{}) {
 		player.PlayPause()
@@ -34,11 +37,16 @@ func (this *Application) Run() {
 		player.Previous()
 	})
 
-	for {
+	this.gui.RegisterActionHandler(gui.ACTION_QUIT, func(args []interface{}) {
+		this.quitRequested = true
+	})
+
+	for !this.quitRequested {
 		current_song, _ := player.GetCurrentSong()
 		status, _ := player.GetStatus()
 		this.gui.UpdateCurrentSong(current_song)
 		this.gui.UpdateCurrentStatus(status)
 		time.Sleep(1 * time.Second)
 	}
+
 }

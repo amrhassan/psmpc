@@ -22,6 +22,7 @@ const (
 	ACTION_PLAYPAUSE = iota
 	ACTION_NEXT      = iota
 	ACTION_PREVIOUS  = iota
+	ACTION_QUIT      = iota
 )
 
 type GUI struct {
@@ -106,7 +107,7 @@ func (this *GUI) getGtkObject(name string) glib.IObject {
 func (this *GUI) Run() {
 
 	this.main_window.Connect("destroy", func() {
-		gtk.MainQuit()
+		this.fireAction(ACTION_QUIT)
 	})
 
 	this.getGtkObject("play-pause_button").(*gtk.Button).Connect("clicked", func() {
@@ -135,7 +136,6 @@ func (this *GUI) Quit() {
 
 // Updates the GUI with the currently-playing song information
 func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
-
 	glib.IdleAdd(func() {
 		if current_song.Title != "" {
 			this.title_label.SetText(current_song.Title)
