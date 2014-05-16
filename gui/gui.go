@@ -3,6 +3,7 @@ package gui
 import (
 	"container/list"
 	"github.com/amrhassan/psmpc/mpdinfo"
+	"github.com/conformal/gotk3/glib"
 	"github.com/conformal/gotk3/gtk"
 )
 
@@ -93,6 +94,14 @@ func NewGUI() *GUI {
 	}
 }
 
+func (this *GUI) getGtkObject(name string) glib.IObject {
+	object, err := this.builder.GetObject(name)
+	if err != nil {
+		panic("Failed to retrieve GTK object " + name)
+	}
+	return object
+}
+
 // Initiates the GUI
 func (this *GUI) Run() {
 
@@ -102,13 +111,16 @@ func (this *GUI) Run() {
 		gtk.MainQuit()
 	})
 
-	playpause_button, err := this.builder.GetObject("play-pause_button")
-	if err != nil {
-		error_panic("Failed to retrieve play-pause_button", err)
-	}
-
-	playpause_button.(*gtk.Button).Connect("clicked", func() {
+	this.getGtkObject("play-pause_button").(*gtk.Button).Connect("clicked", func() {
 		this.fireAction(ACTION_PLAYPAUSE)
+	})
+
+	this.getGtkObject("previous_button").(*gtk.Button).Connect("clicked", func() {
+		this.fireAction(ACTION_PREVIOUS)
+	})
+
+	this.getGtkObject("next_button").(*gtk.Button).Connect("clicked", func() {
+		this.fireAction(ACTION_NEXT)
 	})
 
 	gtk.Main()

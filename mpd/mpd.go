@@ -57,3 +57,11 @@ func (this *Player) GetStatus() (*mpdinfo.Status, error) {
 		State: mpdinfo.State(status["state"]),
 	}, nil
 }
+
+func (this *Player) Next() error {
+	return this.client.Next()
+}
+
+func (this *Player) Previous() error {
+	return this.client.Previous()
+}
