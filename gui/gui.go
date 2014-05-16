@@ -105,8 +105,6 @@ func (this *GUI) getGtkObject(name string) glib.IObject {
 // Initiates the GUI
 func (this *GUI) Run() {
 
-	this.main_window.ShowAll()
-
 	this.main_window.Connect("destroy", func() {
 		gtk.MainQuit()
 	})
@@ -123,35 +121,54 @@ func (this *GUI) Run() {
 		this.fireAction(ACTION_NEXT)
 	})
 
+	this.main_window.ShowAll()
 	gtk.Main()
+
 }
 
 // Shuts down the GUI
 func (this *GUI) Quit() {
-	gtk.MainQuit()
+	glib.IdleAdd(func() {
+		gtk.MainQuit()
+	})
 }
 
 // Updates the GUI with the currently-playing song information
 func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 
-	if current_song.Title != "" {
-		this.title_label.SetText(current_song.Title)
-	}
+	glib.IdleAdd(func() {
+		if current_song.Title != "" {
+			this.title_label.SetText(current_song.Title)
+		}
 
-	if current_song.Artist != "" {
-		this.artist_label.SetText(current_song.Artist)
-	}
+		if current_song.Artist != "" {
+			this.artist_label.SetText(current_song.Artist)
+		}
+	})
 }
 
 // Updates the GUI with the current MPD status
 func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
-	if current_status.State == mpdinfo.STATE_STOPPED {
-		this.stopped_header.Show()
-		this.playback_header.Hide()
-	} else {
-		this.stopped_header.Hide()
-		this.playback_header.Show()
-	}
+	glib.IdleAdd(func() {
+		switch current_status.State {
+
+		case mpdinfo.STATE_STOPPED:
+			this.stopped_header.Show()
+			this.playback_header.Hide()
+
+		case mpdinfo.STATE_PLAYING:
+			pause_image := this.getGtkObject("pause_image").(*gtk.Image)
+			this.getGtkObject("play-pause_button").(*gtk.Button).SetImage(pause_image)
+			this.stopped_header.Hide()
+			this.playback_header.Show()
+
+		case mpdinfo.STATE_PAUSED:
+			play_image := this.getGtkObject("play_image").(*gtk.Image)
+			this.getGtkObject("play-pause_button").(*gtk.Button).SetImage(play_image)
+			this.stopped_header.Hide()
+			this.playback_header.Show()
+		}
+	})
 }
 
 // Fires the action specified by the given Action, passing the given arguments to all the
