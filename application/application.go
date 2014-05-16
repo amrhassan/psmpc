@@ -1,7 +1,6 @@
 package application
 
 import (
-	"fmt"
 	"github.com/amrhassan/psmpc/gui"
 	"github.com/amrhassan/psmpc/mpd"
 	"time"
