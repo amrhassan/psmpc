@@ -112,12 +112,6 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 	}
 	title_label := title_label_gobject.(*gtk.Label)
 
-	stopped_header_gobject, err := builder.GetObject("stopped_header_box")
-	if err != nil {
-		error_panic("Failed to retrieve stopped_header_box gobject", err)
-	}
-	stopped_header := stopped_header_gobject.(*gtk.Box)
-
 	playback_header_gobject, err := builder.GetObject("playback_header_box")
 	if err != nil {
 		error_panic("Failed to retrieve playback_header_box", err)
@@ -129,7 +123,6 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 		main_window:                main_window,
 		title_label:                title_label,
 		artist_label:               artist_label,
-		stopped_header:             stopped_header,
 		playback_header:            playback_header,
 		registered_action_handlers: make(map[Action]*list.List),
 		buttonKeyMap:               buttonKeyMap,
@@ -174,7 +167,6 @@ func (this *GUI) Run() {
 
 	this.main_window.ShowAll()
 	gtk.Main()
-
 }
 
 // A keyboard key
@@ -219,20 +211,23 @@ func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 		switch current_status.State {
 
 		case mpdinfo.STATE_STOPPED:
-			this.stopped_header.Show()
-			this.playback_header.Hide()
+			this.getGtkObject("controls_box").(*gtk.Box).Hide()
+			this.getGtkObject("artist_box").(*gtk.Box).Hide()
+			this.getGtkObject("title_label").(*gtk.Label).SetText("Stopped")
 
 		case mpdinfo.STATE_PLAYING:
+			this.getGtkObject("controls_box").(*gtk.Box).Show()
+			this.getGtkObject("artist_box").(*gtk.Box).Show()
+
 			pause_image := this.getGtkObject("pause_image").(*gtk.Image)
 			this.getGtkObject("play-pause_button").(*gtk.Button).SetImage(pause_image)
-			this.stopped_header.Hide()
-			this.playback_header.Show()
 
 		case mpdinfo.STATE_PAUSED:
+			this.getGtkObject("controls_box").(*gtk.Box).Show()
+			this.getGtkObject("artist_box").(*gtk.Box).Show()
+
 			play_image := this.getGtkObject("play_image").(*gtk.Image)
 			this.getGtkObject("play-pause_button").(*gtk.Button).SetImage(play_image)
-			this.stopped_header.Hide()
-			this.playback_header.Show()
 		}
 	})
 }
