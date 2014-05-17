@@ -13,8 +13,15 @@ type Application struct {
 }
 
 func NewApplication() *Application {
+
+	keyMap := map[int]gui.Action{
+		80: gui.ACTION_PLAYPAUSE, // P
+		60: gui.ACTION_PREVIOUS,  // <
+		62: gui.ACTION_NEXT,      // >
+	}
+
 	return &Application{
-		gui:           gui.NewGUI(),
+		gui:           gui.NewGUI(keyMap),
 		player:        mpd.NewPlayer(),
 		quitRequested: false,
 	}

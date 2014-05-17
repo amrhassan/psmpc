@@ -1,10 +1,18 @@
 package gui
 
+/*
+#cgo pkg-config: gdk-3.0
+#include <gdk/gdk.h>
+*/
+import "C"
+
 import (
 	"container/list"
 	"github.com/amrhassan/psmpc/mpdinfo"
+	"github.com/conformal/gotk3/gdk"
 	"github.com/conformal/gotk3/glib"
 	"github.com/conformal/gotk3/gtk"
+	"unsafe"
 )
 
 const glad_file_path = "gui/ui.glade"
@@ -33,6 +41,7 @@ type GUI struct {
 	stopped_header             *gtk.Box
 	playback_header            *gtk.Box
 	registered_action_handlers map[Action]*list.List
+	buttonKeyMap               map[int]Action
 }
 
 func error_panic(message string, err error) {
@@ -40,7 +49,9 @@ func error_panic(message string, err error) {
 }
 
 // Constructs and initializes a new GUI instance
-func NewGUI() *GUI {
+// Args:
+// 	buttonKeyMap: a mapping between button key values and GUI actions
+func NewGUI(buttonKeyMap map[int]Action) *GUI {
 	gtk.Init(nil)
 
 	builder, err := gtk.BuilderNew()
@@ -92,6 +103,7 @@ func NewGUI() *GUI {
 		stopped_header:             stopped_header,
 		playback_header:            playback_header,
 		registered_action_handlers: make(map[Action]*list.List),
+		buttonKeyMap:               buttonKeyMap,
 	}
 }
 
@@ -122,9 +134,34 @@ func (this *GUI) Run() {
 		this.fireAction(ACTION_NEXT)
 	})
 
+	this.main_window.Connect("key-release-event", func(window *gtk.Window, event *gdk.Event) {
+		key := extract_key_from_gdk_event(event)
+		action, mapped := this.buttonKeyMap[key.value]
+
+		if mapped {
+			this.fireAction(action)
+		}
+	})
+
 	this.main_window.ShowAll()
 	gtk.Main()
 
+}
+
+// A keyboard key
+type key struct {
+	value          int
+	representation string
+}
+
+// Extracts a key instance from the GdkEventKey wrapped in the given gdk.Event
+func extract_key_from_gdk_event(gdk_key_event *gdk.Event) key {
+	value := (*C.GdkEventKey)(unsafe.Pointer(gdk_key_event.Native())).keyval
+	repr := (*C.char)(C.gdk_keyval_name(value))
+	return key{
+		value:          int(value),
+		representation: C.GoString(repr),
+	}
 }
 
 // Shuts down the GUI
