@@ -28,6 +28,7 @@
     <property name="valign">start</property>
     <property name="title" translatable="yes">Pretty Simple MPD Client</property>
     <property name="default_height">10</property>
+    <property name="icon">icon.png</property>
     <property name="type_hint">dialog</property>
     <child>
       <object class="GtkBox" id="main_box">

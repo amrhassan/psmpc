@@ -18,14 +18,14 @@ import (
 )
 
 /*
- * The paths where the Glade UI file is looked up from. The paths are tried in the order
+ * The paths where the static resources are looked up from. The paths are tried in the order
  * they are listed in, and the first one that exists is used.
  */
-var glad_file_paths = []string{
-	"gui/ui.glade",
-	"~/.local/share/psmpc/gui/ui.glade",
-	"/usr/local/share/psmpc/gui/ui.glade",
-	"/usr/share/psmpc/gui/ui.glade",
+var resource_file_paths = []string{
+	".",
+	"~/.local/share/psmpc/",
+	"/usr/local/share/psmpc/",
+	"/usr/share/psmpc/",
 }
 
 // An action type label
@@ -59,21 +59,35 @@ func error_panic(message string, err error) {
 	panic(message + ": " + err.Error())
 }
 
+func path_exists(path string) bool {
+	_, path_error := os.Stat(path)
+	return path_error == nil || os.IsExist(path_error)
+}
+
 func get_glade_path() string {
 
-	path_exists := func(path string) bool {
-		_, path_error := os.Stat(path)
-		return path_error == nil || os.IsExist(path_error)
-	}
-
-	for _, path := range glad_file_paths {
-		if path_exists(path) {
-			log.Println("Using the glade file from: " + path)
-			return path
+	for _, path := range resource_file_paths {
+		full_path := path + "/gui/ui.glade"
+		if path_exists(full_path) {
+			log.Println("Using the glade file from: " + full_path)
+			return full_path
 		}
 	}
 
 	log.Panic("Can't find a glade UI file")
+	return ""
+}
+
+func get_icon_path() string {
+	for _, path := range resource_file_paths {
+		full_path := path + "/gui/icon.png"
+		if path_exists(full_path) {
+			log.Println("Using the icon from: " + full_path)
+			return full_path
+		}
+	}
+
+	log.Panic("Can't find the icon file")
 	return ""
 }
 
@@ -99,6 +113,7 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 	}
 
 	main_window := main_window_gobject.(*gtk.Window)
+	main_window.SetIconFromFile(get_icon_path())
 
 	artist_label_gobject, err := builder.GetObject("artist_label")
 	if err != nil {
