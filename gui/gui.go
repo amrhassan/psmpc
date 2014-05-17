@@ -12,10 +12,21 @@ import (
 	"github.com/conformal/gotk3/gdk"
 	"github.com/conformal/gotk3/glib"
 	"github.com/conformal/gotk3/gtk"
+	"log"
+	"os"
 	"unsafe"
 )
 
-const glad_file_path = "gui/ui.glade"
+/*
+ * The paths where the Glade UI file is looked up from. The paths are tried in the order
+ * they are listed in, and the first one that exists is used.
+ */
+var glad_file_paths = []string{
+	"gui/ui.glade",
+	"~/.local/share/psmpc/gui/ui.glade",
+	"/usr/local/share/psmpc/gui/ui.glade",
+	"/usr/share/psmpc/gui/ui.glade",
+}
 
 // An action type label
 type Action int
@@ -48,6 +59,24 @@ func error_panic(message string, err error) {
 	panic(message + ": " + err.Error())
 }
 
+func get_glade_path() string {
+
+	path_exists := func(path string) bool {
+		_, path_error := os.Stat(path)
+		return path_error == nil || os.IsExist(path_error)
+	}
+
+	for _, path := range glad_file_paths {
+		if path_exists(path) {
+			log.Println("Using the glade file from: " + path)
+			return path
+		}
+	}
+
+	log.Panic("Can't find a glade UI file")
+	return ""
+}
+
 // Constructs and initializes a new GUI instance
 // Args:
 // 	buttonKeyMap: a mapping between button key values and GUI actions
@@ -59,7 +88,7 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 		error_panic("Failed to create gtk.Builder", err)
 	}
 
-	err = builder.AddFromFile(glad_file_path)
+	err = builder.AddFromFile(get_glade_path())
 	if err != nil {
 		error_panic("Failed to load the Glade UI file", err)
 	}
