@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"errors"
 	"github.com/amrhassan/psmpc/mpdinfo"
+	"log"
 )
 
 type Player struct {
@@ -48,8 +49,10 @@ func (this *Player) Connect() error {
 	this.watcher = watcher
 
 	go func() {
-		for _ = range this.watcher.Event {
+		for event := range this.watcher.Event {
+			log.Println("Got MPD event:", event)
 			for e := this.changeHandlers.Front(); e != nil; e = e.Next() {
+				log.Println("Notifying change handler:", e.Value)
 				e.Value.(ChangeHandler)()
 			}
 		}

@@ -52,6 +52,13 @@ type GUI struct {
 	artist_label               *gtk.Label
 	stopped_header             *gtk.Box
 	playback_header            *gtk.Box
+	controls_box               *gtk.Box
+	artist_box                 *gtk.Box
+	previous_button            *gtk.Button
+	playpause_button           *gtk.Button
+	next_button                *gtk.Button
+	play_image                 *gtk.Image
+	pause_image                *gtk.Image
 	registered_action_handlers map[Action]*list.List
 	buttonKeyMap               map[int]Action
 }
@@ -108,49 +115,44 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 		error_panic("Failed to load the Glade UI file", err)
 	}
 
-	main_window_gobject, err := builder.GetObject("main_window")
-	if err != nil {
-		error_panic("Failed to retrieve the main_window object", err)
+	getGtkObject := func(name string) glib.IObject {
+		object, err := builder.GetObject(name)
+		if err != nil {
+			panic("Failed to retrieve GTK object " + name)
+		}
+		return object
 	}
 
-	main_window := main_window_gobject.(*gtk.Window)
+	main_window := getGtkObject("main_window").(*gtk.Window)
 	main_window.SetIconFromFile(get_icon_path())
 
-	artist_label_gobject, err := builder.GetObject("artist_label")
-	if err != nil {
-		error_panic("Failed to retrieve artist_label object", err)
-	}
-	artist_label := artist_label_gobject.(*gtk.Label)
-
-	title_label_gobject, err := builder.GetObject("title_label")
-	if err != nil {
-		error_panic("Failed to retrieve title_label object", err)
-	}
-	title_label := title_label_gobject.(*gtk.Label)
-
-	playback_header_gobject, err := builder.GetObject("playback_header_box")
-	if err != nil {
-		error_panic("Failed to retrieve playback_header_box", err)
-	}
-	playback_header := playback_header_gobject.(*gtk.Box)
+	artist_label := getGtkObject("artist_label").(*gtk.Label)
+	title_label := getGtkObject("title_label").(*gtk.Label)
+	playback_header := getGtkObject("playback_header_box").(*gtk.Box)
+	controls_box := getGtkObject("controls_box").(*gtk.Box)
+	artist_box := getGtkObject("artist_box").(*gtk.Box)
+	playpause_button := getGtkObject("play-pause_button").(*gtk.Button)
+	previous_button := getGtkObject("previous_button").(*gtk.Button)
+	next_button := getGtkObject("next_button").(*gtk.Button)
+	pause_image, _ := gtk.ImageNewFromIconName("gtk-media-pause", gtk.ICON_SIZE_BUTTON)
+	play_image, _ := getGtkObject("play_image").(*gtk.Image)
 
 	return &GUI{
 		builder:                    builder,
 		main_window:                main_window,
 		title_label:                title_label,
 		artist_label:               artist_label,
+		controls_box:               controls_box,
+		artist_box:                 artist_box,
+		playpause_button:           playpause_button,
+		previous_button:            previous_button,
+		next_button:                next_button,
 		playback_header:            playback_header,
+		play_image:                 play_image,
+		pause_image:                pause_image,
 		registered_action_handlers: make(map[Action]*list.List),
 		buttonKeyMap:               buttonKeyMap,
 	}
-}
-
-func (this *GUI) getGtkObject(name string) glib.IObject {
-	object, err := this.builder.GetObject(name)
-	if err != nil {
-		panic("Failed to retrieve GTK object " + name)
-	}
-	return object
 }
 
 // Initiates the GUI
@@ -160,15 +162,15 @@ func (this *GUI) Run() {
 		this.fireAction(ACTION_QUIT)
 	})
 
-	this.getGtkObject("play-pause_button").(*gtk.Button).Connect("clicked", func() {
+	this.playpause_button.Connect("clicked", func() {
 		this.fireAction(ACTION_PLAYPAUSE)
 	})
 
-	this.getGtkObject("previous_button").(*gtk.Button).Connect("clicked", func() {
+	this.previous_button.Connect("clicked", func() {
 		this.fireAction(ACTION_PREVIOUS)
 	})
 
-	this.getGtkObject("next_button").(*gtk.Button).Connect("clicked", func() {
+	this.next_button.Connect("clicked", func() {
 		this.fireAction(ACTION_NEXT)
 	})
 
@@ -193,6 +195,7 @@ type key struct {
 
 // Extracts a key instance from the GdkEventKey wrapped in the given gdk.Event
 func extract_key_from_gdk_event(gdk_key_event *gdk.Event) key {
+	log.Printf("Extracting pressed key")
 	value := (*C.GdkEventKey)(unsafe.Pointer(gdk_key_event.Native())).keyval
 	repr := (*C.char)(C.gdk_keyval_name(value))
 	return key{
@@ -224,29 +227,25 @@ func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 
 // Updates the GUI with the current MPD status
 func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
-	log.Printf("Updating current statis: %v", current_status)
+	log.Printf("Updating current status: %v", current_status)
 	_, err := glib.IdleAdd(func() {
 		switch current_status.State {
 
 		case mpdinfo.STATE_STOPPED:
-			this.getGtkObject("controls_box").(*gtk.Box).Hide()
-			this.getGtkObject("artist_box").(*gtk.Box).Hide()
-			this.getGtkObject("title_label").(*gtk.Label).SetText("Stopped")
+			this.controls_box.Hide()
+			this.artist_box.Hide()
+			this.title_label.SetText("Stopped")
 			this.main_window.SetTitle("psmpc")
 
 		case mpdinfo.STATE_PLAYING:
-			this.getGtkObject("controls_box").(*gtk.Box).Show()
-			this.getGtkObject("artist_box").(*gtk.Box).Show()
-
-			pause_image := this.getGtkObject("pause_image").(*gtk.Image)
-			this.getGtkObject("play-pause_button").(*gtk.Button).SetImage(pause_image)
+			this.controls_box.Show()
+			this.artist_box.Show()
+			this.playpause_button.SetImage(this.pause_image)
 
 		case mpdinfo.STATE_PAUSED:
-			this.getGtkObject("controls_box").(*gtk.Box).Show()
-			this.getGtkObject("artist_box").(*gtk.Box).Show()
-
-			play_image := this.getGtkObject("play_image").(*gtk.Image)
-			this.getGtkObject("play-pause_button").(*gtk.Button).SetImage(play_image)
+			this.controls_box.Show()
+			this.artist_box.Show()
+			this.playpause_button.SetImage(this.play_image)
 		}
 	})
 

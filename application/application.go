@@ -3,6 +3,7 @@ package application
 import (
 	"github.com/amrhassan/psmpc/gui"
 	"github.com/amrhassan/psmpc/mpd"
+	"log"
 	"time"
 )
 
@@ -67,9 +68,14 @@ func (this *Application) Run() {
 	for !this.quitRequested {
 		time.Sleep(1 * time.Second)
 	}
+
+	log.Println("Bye")
 }
 
 func (this *Application) updateGui() {
+
+	log.Printf("About to update the GUI")
+
 	current_song, _ := this.player.GetCurrentSong()
 	status, _ := this.player.GetStatus()
 
