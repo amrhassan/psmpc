@@ -8,6 +8,7 @@ import "C"
 
 import (
 	"container/list"
+	"fmt"
 	"github.com/amrhassan/psmpc/mpdinfo"
 	"github.com/conformal/gotk3/gdk"
 	"github.com/conformal/gotk3/glib"
@@ -210,13 +211,10 @@ func (this *GUI) Quit() {
 // Updates the GUI with the currently-playing song information
 func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 	glib.IdleAdd(func() {
-		if current_song.Title != "" {
-			this.title_label.SetText(current_song.Title)
-		}
+		this.title_label.SetText(current_song.Title)
+		this.artist_label.SetText(current_song.Artist)
 
-		if current_song.Artist != "" {
-			this.artist_label.SetText(current_song.Artist)
-		}
+		this.main_window.SetTitle(fmt.Sprintf("psmpc: %s - %s", current_song.Artist, current_song.Title))
 	})
 }
 
@@ -229,6 +227,7 @@ func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 			this.getGtkObject("controls_box").(*gtk.Box).Hide()
 			this.getGtkObject("artist_box").(*gtk.Box).Hide()
 			this.getGtkObject("title_label").(*gtk.Label).SetText("Stopped")
+			this.main_window.SetTitle("psmpc")
 
 		case mpdinfo.STATE_PLAYING:
 			this.getGtkObject("controls_box").(*gtk.Box).Show()
