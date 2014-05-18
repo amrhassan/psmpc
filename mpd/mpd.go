@@ -68,6 +68,9 @@ func (this *Player) Disconnect() error {
 	return this.client.Close()
 }
 
+/*
+ * Returns nil if no current song is playing
+ */
 func (this *Player) GetCurrentSong() (*mpdinfo.CurrentSong, error) {
 
 	if !this.IsConnected() {
@@ -79,9 +82,14 @@ func (this *Player) GetCurrentSong() (*mpdinfo.CurrentSong, error) {
 		return nil, err
 	}
 
+	if current_song["Title"] == "" { // Unacceptable
+		return nil, nil
+	}
+
 	return &mpdinfo.CurrentSong{
 		Title:  current_song["Title"],
 		Artist: current_song["Artist"],
+		Album:  current_song["Album"],
 	}, nil
 }
 

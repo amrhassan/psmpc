@@ -210,6 +210,8 @@ func (this *GUI) Quit() {
 
 // Updates the GUI with the currently-playing song information
 func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
+
+	log.Printf("Updating current song: %v%n", current_song)
 	glib.IdleAdd(func() {
 		this.title_label.SetText(current_song.Title)
 		this.artist_label.SetText(current_song.Artist)

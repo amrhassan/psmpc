@@ -65,6 +65,12 @@ func (this *Application) Run() {
 func (this *Application) updateGui() {
 	current_song, _ := this.player.GetCurrentSong()
 	status, _ := this.player.GetStatus()
-	this.gui.UpdateCurrentSong(current_song)
-	this.gui.UpdateCurrentStatus(status)
+
+	if current_song != nil {
+		this.gui.UpdateCurrentSong(current_song)
+	}
+
+	if status != nil {
+		this.gui.UpdateCurrentStatus(status)
+	}
 }
