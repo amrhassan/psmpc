@@ -14,22 +14,24 @@ type Application struct {
 
 func NewApplication() *Application {
 
-	keyMap := map[int]gui.Action{
-		80: gui.ACTION_PLAYPAUSE, // P
-		60: gui.ACTION_PREVIOUS,  // <
-		62: gui.ACTION_NEXT,      // >
-	}
-
 	return &Application{
-		gui:           gui.NewGUI(keyMap),
 		player:        mpd.NewPlayer(),
 		quitRequested: false,
 	}
 }
 
-func (this *Application) Run() {
-	this.player.Connect()
-	defer this.player.Disconnect()
+func get_keymap() map[int]gui.Action {
+	return map[int]gui.Action{
+		80: gui.ACTION_PLAYPAUSE, // P
+		60: gui.ACTION_PREVIOUS,  // <
+		62: gui.ACTION_NEXT,      // >
+	}
+}
+
+func (this *Application) runGui() {
+
+	this.gui = gui.NewGUI(get_keymap())
+	defer this.gui.Quit()
 
 	this.gui.RegisterActionHandler(gui.ACTION_PLAYPAUSE, func(args []interface{}) {
 		this.player.PlayPause()
@@ -53,13 +55,18 @@ func (this *Application) Run() {
 		this.updateGui()
 	})
 
-	go this.gui.Run()
-	defer this.gui.Quit()
+	this.gui.Run()
+}
+
+func (this *Application) Run() {
+	this.player.Connect()
+	defer this.player.Disconnect()
+
+	go this.runGui()
 
 	for !this.quitRequested {
 		time.Sleep(1 * time.Second)
 	}
-
 }
 
 func (this *Application) updateGui() {

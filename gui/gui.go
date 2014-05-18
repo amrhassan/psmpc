@@ -210,19 +210,22 @@ func (this *GUI) Quit() {
 
 // Updates the GUI with the currently-playing song information
 func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
-
-	log.Printf("Updating current song: %v%n", current_song)
-	glib.IdleAdd(func() {
+	log.Printf("Updating current song: %v", current_song)
+	_, err := glib.IdleAdd(func() {
 		this.title_label.SetText(current_song.Title)
 		this.artist_label.SetText(current_song.Artist)
 
 		this.main_window.SetTitle(fmt.Sprintf("psmpc: %s - %s", current_song.Artist, current_song.Title))
 	})
+	if err != nil {
+		log.Fatal("Failed to do glib.IdleAdd()")
+	}
 }
 
 // Updates the GUI with the current MPD status
 func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
-	glib.IdleAdd(func() {
+	log.Printf("Updating current statis: %v", current_status)
+	_, err := glib.IdleAdd(func() {
 		switch current_status.State {
 
 		case mpdinfo.STATE_STOPPED:
@@ -246,6 +249,10 @@ func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 			this.getGtkObject("play-pause_button").(*gtk.Button).SetImage(play_image)
 		}
 	})
+
+	if err != nil {
+		log.Fatal("Failed to do glib.IdleAdd()")
+	}
 }
 
 // Fires the action specified by the given Action, passing the given arguments to all the
