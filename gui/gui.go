@@ -257,16 +257,19 @@ func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 // Fires the action specified by the given Action, passing the given arguments to all the
 // subscribed handlers
 func (this *GUI) fireAction(action_type Action, args ...interface{}) {
+	log.Printf("Firing action %v", action_type)
+
 	handlers, any := this.registered_action_handlers[action_type]
 
 	if any == false {
 		// None are registered
+		log.Println("No action handlers found")
 		return
 	}
 
 	for e := handlers.Front(); e != nil; e = e.Next() {
 		handler := e.Value.(ActionHandler)
-		handler(args)
+		go handler(args)
 	}
 }
 
