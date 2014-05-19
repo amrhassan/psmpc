@@ -9,11 +9,9 @@ import (
 )
 
 type Player struct {
-	client         *mpd.Client
 	hostname       string
 	port           uint
 	changeHandlers *list.List
-	watcher        *mpd.Watcher
 }
 
 type ChangeHandler func()
@@ -27,29 +25,30 @@ func NewPlayer() *Player {
 	port := uint(6600)
 
 	return &Player{
-		client:         nil,
 		hostname:       hostname,
 		port:           port,
 		changeHandlers: list.New(),
 	}
 }
 
-// Connects to the MPD server.
-func (this *Player) Connect() error {
+func (this *Player) establishConnection() (*mpd.Client, error) {
 	client, err := mpd.Dial("tcp", "localhost:6600")
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return client, nil
+}
 
-	this.client = client
+// Connects to the MPD server.
+func (this *Player) Connect() error {
+
 	watcher, err := mpd.NewWatcher("tcp", "localhost:6600", "")
 	if err != nil {
 		return err
 	}
-	this.watcher = watcher
 
 	go func() {
-		for event := range this.watcher.Event {
+		for event := range watcher.Event {
 			log.Println("Got MPD event:", event)
 			for e := this.changeHandlers.Front(); e != nil; e = e.Next() {
 				log.Println("Notifying change handler:", e.Value)
@@ -61,26 +60,18 @@ func (this *Player) Connect() error {
 	return nil
 }
 
-// Returns true if this Player is connected to its server
-func (this *Player) IsConnected() bool {
-	return this.client != nil
-}
-
-// Disconnects this connection
-func (this *Player) Disconnect() error {
-	return this.client.Close()
-}
-
 /*
  * Returns nil if no current song is playing
  */
 func (this *Player) GetCurrentSong() (*mpdinfo.CurrentSong, error) {
 
-	if !this.IsConnected() {
-		return nil, playerNotConnectedError
+	client, err := this.establishConnection()
+	defer client.Close()
+	if err != nil {
+		return nil, err
 	}
 
-	current_song, err := this.client.CurrentSong()
+	current_song, err := client.CurrentSong()
 	if err != nil {
 		return nil, err
 	}
@@ -98,29 +89,33 @@ func (this *Player) GetCurrentSong() (*mpdinfo.CurrentSong, error) {
 
 func (this *Player) PlayPause() error {
 
-	if !this.IsConnected() {
-		return playerNotConnectedError
+	client, err := this.establishConnection()
+	defer client.Close()
+	if err != nil {
+		return err
 	}
 
 	current_status, err := this.GetStatus()
 	if err != nil {
-		return nil
+		return err
 	}
 
 	if current_status.State == mpdinfo.STATE_PLAYING {
-		return this.client.Pause(true)
+		return client.Pause(true)
 	} else {
-		return this.client.Pause(false)
+		return client.Pause(false)
 	}
 }
 
 func (this *Player) GetStatus() (*mpdinfo.Status, error) {
 
-	if !this.IsConnected() {
-		return nil, playerNotConnectedError
+	client, err := this.establishConnection()
+	defer client.Close()
+	if err != nil {
+		return nil, err
 	}
 
-	status, err := this.client.Status()
+	status, err := client.Status()
 	if err != nil {
 		return nil, err
 	}
@@ -131,19 +126,23 @@ func (this *Player) GetStatus() (*mpdinfo.Status, error) {
 }
 
 func (this *Player) Next() error {
-	if !this.IsConnected() {
-		return playerNotConnectedError
+	client, err := this.establishConnection()
+	defer client.Close()
+	if err != nil {
+		return err
 	}
 
-	return this.client.Next()
+	return client.Next()
 }
 
 func (this *Player) Previous() error {
-	if !this.IsConnected() {
-		return playerNotConnectedError
+	client, err := this.establishConnection()
+	defer client.Close()
+	if err != nil {
+		return err
 	}
 
-	return this.client.Previous()
+	return client.Previous()
 }
 
 func (this *Player) RegisterChangeHandler(changeHandler ChangeHandler) {

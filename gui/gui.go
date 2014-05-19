@@ -267,7 +267,10 @@ func (this *GUI) fireAction(action_type Action, args ...interface{}) {
 		return
 	}
 
+	log.Println("Handlers found ", handlers)
+
 	for e := handlers.Front(); e != nil; e = e.Next() {
+		log.Println("Executing handler", e.Value)
 		handler := e.Value.(ActionHandler)
 		go handler(args)
 	}

@@ -35,15 +35,24 @@ func (this *Application) runGui() {
 	defer this.gui.Quit()
 
 	this.gui.RegisterActionHandler(gui.ACTION_PLAYPAUSE, func(args []interface{}) {
-		this.player.PlayPause()
+		err := this.player.PlayPause()
+		if err != nil {
+			log.Fatalf("Failed to playpause: %v", err)
+		}
 	})
 
 	this.gui.RegisterActionHandler(gui.ACTION_NEXT, func(args []interface{}) {
-		this.player.Next()
+		err := this.player.Next()
+		if err != nil {
+			log.Fatalf("Failed to next: %v", err)
+		}
 	})
 
 	this.gui.RegisterActionHandler(gui.ACTION_PREVIOUS, func(args []interface{}) {
-		this.player.Previous()
+		err := this.player.Previous()
+		if err != nil {
+			log.Fatalf("Failed to previous: %v", err)
+		}
 	})
 
 	this.gui.RegisterActionHandler(gui.ACTION_QUIT, func(args []interface{}) {
@@ -61,7 +70,6 @@ func (this *Application) runGui() {
 
 func (this *Application) Run() {
 	this.player.Connect()
-	defer this.player.Disconnect()
 
 	go this.runGui()
 
