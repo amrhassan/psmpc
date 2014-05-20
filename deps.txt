@@ -1,2 +1,0 @@
-github.com/amrhassan/gotk3
-code.google.com/p/gompd/mpd
