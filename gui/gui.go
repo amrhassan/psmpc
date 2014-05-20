@@ -59,6 +59,9 @@ type GUI struct {
 	next_button                *gtk.Button
 	play_image                 *gtk.Image
 	pause_image                *gtk.Image
+	status_icon                *gtk.StatusIcon
+	album_box                  *gtk.Box
+	album_label                *gtk.Label
 	registered_action_handlers map[Action]*list.List
 	buttonKeyMap               map[int]Action
 }
@@ -135,7 +138,10 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 	previous_button := getGtkObject("previous_button").(*gtk.Button)
 	next_button := getGtkObject("next_button").(*gtk.Button)
 	pause_image, _ := gtk.ImageNewFromIconName("gtk-media-pause", gtk.ICON_SIZE_BUTTON)
-	play_image, _ := getGtkObject("play_image").(*gtk.Image)
+	play_image := getGtkObject("play_image").(*gtk.Image)
+	status_icon, _ := gtk.StatusIconNewFromFile(get_icon_path())
+	album_box := getGtkObject("album_box").(*gtk.Box)
+	album_label := getGtkObject("album_label").(*gtk.Label)
 
 	return &GUI{
 		builder:                    builder,
@@ -150,6 +156,9 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 		playback_header:            playback_header,
 		play_image:                 play_image,
 		pause_image:                pause_image,
+		status_icon:                status_icon,
+		album_box:                  album_box,
+		album_label:                album_label,
 		registered_action_handlers: make(map[Action]*list.List),
 		buttonKeyMap:               buttonKeyMap,
 	}
@@ -160,6 +169,11 @@ func (this *GUI) Run() {
 
 	this.main_window.Connect("destroy", func() {
 		this.fireAction(ACTION_QUIT)
+	})
+
+	this.status_icon.Connect("activate", func() {
+		log.Println("Status Icon clicked!")
+		this.main_window.SetVisible(!this.main_window.GetVisible())
 	})
 
 	this.playpause_button.Connect("clicked", func() {
@@ -218,7 +232,14 @@ func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 		this.title_label.SetText(current_song.Title)
 		this.artist_label.SetText(current_song.Artist)
 
+		if current_song.Album != "" {
+			this.album_label.SetText(current_song.Album)
+		} else {
+			this.album_box.Hide()
+		}
+
 		this.main_window.SetTitle(fmt.Sprintf("psmpc: %s - %s", current_song.Artist, current_song.Title))
+		this.status_icon.SetTooltipText(fmt.Sprintf("psmpc: %s - %s", current_song.Artist, current_song.Title))
 	})
 	if err != nil {
 		log.Fatal("Failed to do glib.IdleAdd()")
@@ -234,17 +255,21 @@ func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 		case mpdinfo.STATE_STOPPED:
 			this.controls_box.Hide()
 			this.artist_box.Hide()
+			this.album_box.Hide()
 			this.title_label.SetText("Stopped")
 			this.main_window.SetTitle("psmpc")
+			this.status_icon.SetTooltipText("psmpc")
 
 		case mpdinfo.STATE_PLAYING:
 			this.controls_box.Show()
 			this.artist_box.Show()
+			this.album_box.Show()
 			this.playpause_button.SetImage(this.pause_image)
 
 		case mpdinfo.STATE_PAUSED:
 			this.controls_box.Show()
 			this.artist_box.Show()
+			this.album_box.Show()
 			this.playpause_button.SetImage(this.play_image)
 		}
 	})
