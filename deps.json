@@ -1,0 +1,11 @@
+{
+    "gompd": {
+        "repo": "code.google.com/p/gompd/mpd",
+        "type": "hg"
+    },
+    "gotk3": {
+        "repo": "git@github.com:amrhassan/gotk3.git",
+        "type": "git-clone",
+        "alias": "github.com/conformal/gotk3"
+    }
+}
