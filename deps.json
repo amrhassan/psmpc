@@ -1,11 +1,23 @@
 {
     "gompd": {
         "repo": "code.google.com/p/gompd/mpd",
+        "version": "tip",
         "type": "hg"
     },
     "gotk3": {
         "repo": "git@github.com:amrhassan/gotk3.git",
+        "version": "master",
         "type": "git-clone",
         "alias": "github.com/conformal/gotk3"
+    },
+    "lastfm-go": {
+        "repo": "github.com/shkh/lastfm-go/lastfm",
+        "version": "bcaac54f0352d9220c7d0141682e0407f42b4a0c",
+        "type": "git"
+    },
+    "magicmime": {
+        "repo": "github.com/rakyll/magicmime",
+        "version": "d927e08c136c1a24c91fc7dc577d8a36e69f0591",
+        "type": "git"
     }
 }
