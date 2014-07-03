@@ -68,7 +68,25 @@ func (this *Application) runGui() {
 		this.updateGui()
 	})
 
-	this.gui.Run()
+	go func() {
+		status, err := this.player.GetStatus()
+		if err != nil {
+			logger.Fatal("Failed to connect to MPD: %s", err)
+		}
+
+		for {
+			if status.State == mpdinfo.STATE_PLAYING {
+				this.gui.UpdateCurrentStatus(status)
+			}
+			time.Sleep(3 * time.Second)
+			status, err = this.player.GetStatus()
+			if err != nil {
+				logger.Fatal("Failed to connect to MPD: %s", err)
+			}
+		}
+	}()
+
+	this.gui.Run() // This blocks the goroutine
 }
 
 func (this *Application) Run() {

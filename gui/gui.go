@@ -68,6 +68,7 @@ type GUI struct {
 	album_art_image            *gtk.Image
 	registered_action_handlers map[Action]*list.List
 	buttonKeyMap               map[int]Action
+	elapsedProgressBar         *gtk.ProgressBar
 	resourceManager            *resources.ResourceManager
 	currentSong                *mpdinfo.CurrentSong
 }
@@ -145,6 +146,7 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 	album_box := getGtkObject("album_box").(*gtk.Box)
 	album_label := getGtkObject("album_label").(*gtk.Label)
 	album_art_image := getGtkObject("album_art").(*gtk.Image)
+	elapsed_progress_bar := getGtkObject("elapsed_progressbar").(*gtk.ProgressBar)
 
 	return &GUI{
 		builder:                    builder,
@@ -163,6 +165,7 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 		album_box:                  album_box,
 		album_label:                album_label,
 		album_art_image:            album_art_image,
+		elapsedProgressBar:         elapsed_progress_bar,
 		registered_action_handlers: make(map[Action]*list.List),
 		buttonKeyMap:               buttonKeyMap,
 		resourceManager:            resources.NewResourceManager(),
@@ -279,7 +282,9 @@ func executeInGlibLoop(code func()) {
 // Updates the GUI with the current MPD status
 func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 	logger.Info("Updating current status: %v", current_status)
-	_, err := glib.IdleAdd(func() {
+
+	executeInGlibLoop(func() {
+
 		switch current_status.State {
 
 		case mpdinfo.STATE_STOPPED:
@@ -297,18 +302,16 @@ func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 			this.artist_box.Show()
 			this.album_box.Show()
 			this.playpause_button.SetImage(this.pause_image)
+			this.elapsedProgressBar.SetFraction(current_status.SongProgress)
 
 		case mpdinfo.STATE_PAUSED:
 			this.controls_box.Show()
 			this.artist_box.Show()
 			this.album_box.Show()
 			this.playpause_button.SetImage(this.play_image)
+			this.elapsedProgressBar.SetFraction(current_status.SongProgress)
 		}
 	})
-
-	if err != nil {
-		logger.Fatal("Failed to do glib.IdleAdd()")
-	}
 }
 
 // Fires the action specified by the given Action, passing the given arguments to all the
