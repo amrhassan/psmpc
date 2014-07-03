@@ -18,7 +18,7 @@
     <property name="stock">gtk-media-previous</property>
   </object>
   <object class="GtkWindow" id="main_window">
-    <property name="width_request">450</property>
+    <property name="width_request">550</property>
     <property name="can_focus">False</property>
     <property name="valign">start</property>
     <property name="title" translatable="yes">Pretty Simple MPD Client</property>

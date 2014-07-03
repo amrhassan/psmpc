@@ -18,8 +18,13 @@ type ResourceCache struct {
 func cacheKey(track *Track) string {
 	hash := md5.New()
 	io.WriteString(hash, track.Artist)
-	io.WriteString(hash, track.Title)
-	io.WriteString(hash, track.Album)
+
+	if track.Album != "" {
+		io.WriteString(hash, track.Album)
+	} else {
+		io.WriteString(hash, track.Title)
+	}
+
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 

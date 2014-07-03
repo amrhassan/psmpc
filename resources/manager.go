@@ -44,7 +44,7 @@ func (this *ResourceManager) getResourceFromProvider(track *Track, resourceType 
 		resource, err := provider.Value.(ResourceProvider).GetResource(track)
 
 		if err != nil {
-			log.Printf("Failed to get %s from %s for %s", resourceType, provider, track)
+			log.Printf("Failed to get %s from %s for %s", resourceType, provider.Value, track)
 			return nil, err
 		}
 
