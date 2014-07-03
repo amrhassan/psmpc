@@ -10,6 +10,7 @@ import (
 	"container/list"
 	"fmt"
 	"github.com/amrhassan/psmpc/mpdinfo"
+	"github.com/amrhassan/psmpc/resources"
 	"github.com/conformal/gotk3/gdk"
 	"github.com/conformal/gotk3/glib"
 	"github.com/conformal/gotk3/gtk"
@@ -62,8 +63,10 @@ type GUI struct {
 	status_icon                *gtk.StatusIcon
 	album_box                  *gtk.Box
 	album_label                *gtk.Label
+	album_art_image            *gtk.Image
 	registered_action_handlers map[Action]*list.List
 	buttonKeyMap               map[int]Action
+	resourceManager            *resources.ResourceManager
 }
 
 func error_panic(message string, err error) {
@@ -142,6 +145,7 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 	status_icon, _ := gtk.StatusIconNewFromFile(get_icon_path())
 	album_box := getGtkObject("album_box").(*gtk.Box)
 	album_label := getGtkObject("album_label").(*gtk.Label)
+	album_art_image := getGtkObject("album_art").(*gtk.Image)
 
 	return &GUI{
 		builder:                    builder,
@@ -159,8 +163,10 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 		status_icon:                status_icon,
 		album_box:                  album_box,
 		album_label:                album_label,
+		album_art_image:            album_art_image,
 		registered_action_handlers: make(map[Action]*list.List),
 		buttonKeyMap:               buttonKeyMap,
+		resourceManager:            resources.NewResourceManager(),
 	}
 }
 
@@ -240,6 +246,14 @@ func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 
 		this.main_window.SetTitle(fmt.Sprintf("psmpc: %s - %s", current_song.Artist, current_song.Title))
 		this.status_icon.SetTooltipText(fmt.Sprintf("psmpc: %s - %s", current_song.Artist, current_song.Title))
+
+		album_art_fp, err :=
+			this.resourceManager.GetResourceAsFilePath(&resources.Track{current_song}, resources.ALBUM_ART)
+		if err != nil {
+			log.Println("Failed to get album art for %s", current_song)
+		} else {
+			this.album_art_image.SetFromFile(album_art_fp)
+		}
 	})
 	if err != nil {
 		log.Fatal("Failed to do glib.IdleAdd()")

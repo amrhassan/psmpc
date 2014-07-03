@@ -15,18 +15,18 @@ type Track struct {
 	*mpdinfo.CurrentSong
 }
 
-type ResourceType int
+type ResourceType string
 
 const (
-	ALBUM_ART ResourceType = iota
-	LYRICS    ResourceType = iota
+	ALBUM_ART ResourceType = "album_art"
+	LYRICS    ResourceType = "lyrics"
 )
 
 // A provider for a resource type
 type ResourceProvider interface {
 
 	// This should return the type which this provider provides
-	GetType() ResourceProvider
+	Type() ResourceType
 
 	// This should return the binary version of the resource
 	GetResource(track *Track) (io.ReadCloser, error)

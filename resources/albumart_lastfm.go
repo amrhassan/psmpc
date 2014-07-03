@@ -22,7 +22,7 @@ func newLastFMAlbumArtProvider() *LastFMAlbumArtProvider {
 	}
 }
 
-func (this *LastFMAlbumArtProvider) GetType() ResourceType {
+func (this *LastFMAlbumArtProvider) Type() ResourceType {
 	return ALBUM_ART
 }
 
