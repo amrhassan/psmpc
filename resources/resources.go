@@ -7,9 +7,12 @@ type of resource for a specified music Track.
 package resources
 
 import (
+	"github.com/amrhassan/psmpc/logging"
 	"github.com/amrhassan/psmpc/mpdinfo"
 	"io"
 )
+
+var logger = logging.New("resources")
 
 type Track struct {
 	*mpdinfo.CurrentSong

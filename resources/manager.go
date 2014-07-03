@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"errors"
 	"io"
-	"log"
 )
 
 type ResourceManager struct {
@@ -44,7 +43,7 @@ func (this *ResourceManager) getResourceFromProvider(track *Track, resourceType 
 		resource, err := provider.Value.(ResourceProvider).GetResource(track)
 
 		if err != nil {
-			log.Printf("Failed to get %s from %s for %s", resourceType, provider.Value, track)
+			logger.Warn("Failed to get %s from %s for %s", resourceType, provider.Value, track)
 			return nil, err
 		}
 
@@ -62,7 +61,7 @@ func (this *ResourceManager) GetResourceAsFilePath(track *Track, resourceType Re
 		resourcePath, err := this.cache.Get(track, resourceType)
 
 		if err != nil {
-			log.Printf("Failed to retrieve %s for %s from cache", resourceType, track)
+			logger.Warn("Failed to retrieve %s for %s from cache", resourceType, track)
 			this.cache.Delete(track, resourceType)
 		} else {
 			return resourcePath, nil
@@ -72,14 +71,14 @@ func (this *ResourceManager) GetResourceAsFilePath(track *Track, resourceType Re
 	resourceStream, err := this.getResourceFromProvider(track, resourceType)
 
 	if err != nil {
-		log.Printf("Failed to get resource %s for %s: %s", resourceType, track, err)
+		logger.Warn("Failed to get resource %s for %s: %s", resourceType, track, err)
 		return "", ResourceNotFound
 	}
 
 	err = this.cache.Set(track, resourceType, resourceStream)
 
 	if err != nil {
-		log.Println("Failed to retrieve the resource %s for %s: %s", resourceType, track, err)
+		logger.Warn("Failed to retrieve the resource %s for %s: %s", resourceType, track, err)
 		return "", ResourceCouldNotBeRetrieved
 	}
 

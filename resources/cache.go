@@ -3,14 +3,11 @@ package resources
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/amrhassan/psmpc/logging"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/user"
 )
-
-var logger = logging.New("resources.cache")
 
 type ResourceCache struct {
 	path string
