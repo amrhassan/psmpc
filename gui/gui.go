@@ -23,7 +23,7 @@ import (
  * The paths where the static resources are looked up from. The paths are tried in the order
  * they are listed in, and the first one that exists is used.
  */
-var resource_file_paths = []string{
+var static_resource_file_paths = []string{
 	".",
 	"~/.local/share/psmpc/",
 	"/usr/local/share/psmpc/",
@@ -78,30 +78,16 @@ func path_exists(path string) bool {
 	return path_error == nil || os.IsExist(path_error)
 }
 
-func get_glade_path() string {
-
-	for _, path := range resource_file_paths {
-		full_path := path + "/gui/ui.glade"
+func get_static_resource_path(resourceName string) string {
+	for _, path := range static_resource_file_paths {
+		full_path := path + "/gui/" + resourceName
 		if path_exists(full_path) {
-			log.Println("Using the glade file from: " + full_path)
+			log.Printf("Using %s file from: %s", resourceName, full_path)
 			return full_path
 		}
 	}
 
-	log.Panic("Can't find a glade UI file")
-	return ""
-}
-
-func get_icon_path() string {
-	for _, path := range resource_file_paths {
-		full_path := path + "/gui/icon.png"
-		if path_exists(full_path) {
-			log.Println("Using the icon from: " + full_path)
-			return full_path
-		}
-	}
-
-	log.Panic("Can't find the icon file")
+	log.Panicf("Can't find %s file", resourceName)
 	return ""
 }
 
@@ -116,7 +102,7 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 		error_panic("Failed to create gtk.Builder", err)
 	}
 
-	err = builder.AddFromFile(get_glade_path())
+	err = builder.AddFromFile(get_static_resource_path("ui.glade"))
 	if err != nil {
 		error_panic("Failed to load the Glade UI file", err)
 	}
@@ -130,7 +116,7 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 	}
 
 	main_window := getGtkObject("main_window").(*gtk.Window)
-	main_window.SetIconFromFile(get_icon_path())
+	main_window.SetIconFromFile(get_static_resource_path("icon.png"))
 
 	artist_label := getGtkObject("artist_label").(*gtk.Label)
 	title_label := getGtkObject("title_label").(*gtk.Label)
@@ -142,7 +128,7 @@ func NewGUI(buttonKeyMap map[int]Action) *GUI {
 	next_button := getGtkObject("next_button").(*gtk.Button)
 	pause_image, _ := gtk.ImageNewFromIconName("gtk-media-pause", gtk.ICON_SIZE_BUTTON)
 	play_image := getGtkObject("play_image").(*gtk.Image)
-	status_icon, _ := gtk.StatusIconNewFromFile(get_icon_path())
+	status_icon, _ := gtk.StatusIconNewFromFile(get_static_resource_path("icon.png"))
 	album_box := getGtkObject("album_box").(*gtk.Box)
 	album_label := getGtkObject("album_label").(*gtk.Label)
 	album_art_image := getGtkObject("album_art").(*gtk.Image)
@@ -234,7 +220,8 @@ func (this *GUI) Quit() {
 // Updates the GUI with the currently-playing song information
 func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 	log.Printf("Updating current song: %v", current_song)
-	_, err := glib.IdleAdd(func() {
+
+	executeInGlibLoop(func() {
 		this.title_label.SetText(current_song.Title)
 		this.artist_label.SetText(current_song.Artist)
 
@@ -246,15 +233,25 @@ func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 
 		this.main_window.SetTitle(fmt.Sprintf("psmpc: %s - %s", current_song.Artist, current_song.Title))
 		this.status_icon.SetTooltipText(fmt.Sprintf("psmpc: %s - %s", current_song.Artist, current_song.Title))
+		this.album_art_image.SetFromFile(get_static_resource_path("album.png"))
+	})
 
+	go func() {
 		album_art_fp, err :=
 			this.resourceManager.GetResourceAsFilePath(&resources.Track{current_song}, resources.ALBUM_ART)
 		if err != nil {
 			log.Println("Failed to get album art for %s", current_song)
 		} else {
-			this.album_art_image.SetFromFile(album_art_fp)
+			executeInGlibLoop(func() {
+				this.album_art_image.SetFromFile(album_art_fp)
+			})
 		}
-	})
+	}()
+}
+
+// The only thread-safe way to execute GTK-manipulating code.
+func executeInGlibLoop(code func()) {
+	_, err := glib.IdleAdd(code)
 	if err != nil {
 		log.Fatal("Failed to do glib.IdleAdd()")
 	}

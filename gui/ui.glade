@@ -58,7 +58,7 @@
                     <property name="height_request">174</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="stock">gtk-missing-image</property>
+                    <property name="pixbuf">album.png</property>
                   </object>
                 </child>
                 <child type="label_item">
