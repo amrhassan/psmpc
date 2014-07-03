@@ -67,6 +67,7 @@ type GUI struct {
 	registered_action_handlers map[Action]*list.List
 	buttonKeyMap               map[int]Action
 	resourceManager            *resources.ResourceManager
+	currentSong                *mpdinfo.CurrentSong
 }
 
 func error_panic(message string, err error) {
@@ -229,7 +230,13 @@ func (this *GUI) Quit() {
 
 // Updates the GUI with the currently-playing song information
 func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
+
+	if this.currentSong != nil && *current_song == *(this.currentSong) {
+		return
+	}
+
 	log.Printf("Updating current song: %v", current_song)
+	this.currentSong = current_song
 
 	executeInGlibLoop(func() {
 		this.title_label.SetText(current_song.Title)
