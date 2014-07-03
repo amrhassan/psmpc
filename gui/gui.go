@@ -78,11 +78,21 @@ func path_exists(path string) bool {
 	return path_error == nil || os.IsExist(path_error)
 }
 
+// A global cahe of static resources. Used by get_static_resource_path()
+var staticResources = make(map[string]string)
+
 func get_static_resource_path(resourceName string) string {
+
+	entry, exists := staticResources[resourceName]
+	if exists {
+		return entry
+	}
+
 	for _, path := range static_resource_file_paths {
 		full_path := path + "/gui/" + resourceName
 		if path_exists(full_path) {
 			log.Printf("Using %s file from: %s", resourceName, full_path)
+			staticResources[resourceName] = full_path
 			return full_path
 		}
 	}
