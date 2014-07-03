@@ -3,12 +3,14 @@ package resources
 import (
 	"crypto/md5"
 	"fmt"
+	"github.com/amrhassan/psmpc/logging"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/user"
 )
+
+var logger = logging.New("resources.cache")
 
 type ResourceCache struct {
 	path string
@@ -35,7 +37,7 @@ func (this *ResourceCache) resourcePath(track *Track, resourceType ResourceType)
 	dir := fmt.Sprintf("%s/%s", this.path, resourceType)
 	err := os.MkdirAll(dir, os.ModePerm|os.ModeDir)
 	if err != nil {
-		log.Printf("Failed to create directory %s: %s", dir, err)
+		logger.Fatal("Failed to create directory %s: %s", dir, err)
 		return "", err
 	}
 	return fmt.Sprintf("%s/%s", dir, cacheKey(track)), nil
@@ -46,12 +48,12 @@ func NewResourceCache() *ResourceCache {
 	currentUser, err := user.Current()
 
 	if err != nil {
-		log.Fatal("Failed to find the running user")
+		logger.Fatal("Failed to find the running user")
 	}
 
 	cachePath := currentUser.HomeDir + "/.cache/psmpc"
 
-	log.Printf("Caching resources in %s", cachePath)
+	logger.Info("Caching resources in %s", cachePath)
 	return &ResourceCache{path: cachePath}
 }
 
@@ -63,7 +65,7 @@ func (this *ResourceCache) Get(track *Track, resourceType ResourceType) (string,
 func (this *ResourceCache) Has(track *Track, resourceType ResourceType) bool {
 	resourcePath, err := this.resourcePath(track, resourceType)
 	if err != nil {
-		log.Println(err)
+		logger.FatalError(err)
 		return false
 	}
 
@@ -71,7 +73,7 @@ func (this *ResourceCache) Has(track *Track, resourceType ResourceType) bool {
 	if os.IsNotExist(err) {
 		return false
 	} else if err != nil {
-		log.Println(err)
+		logger.FatalError(err)
 		return false
 	}
 
@@ -87,7 +89,7 @@ func (this *ResourceCache) Set(track *Track, resourceType ResourceType, resource
 
 	data, err := ioutil.ReadAll(resourceStream)
 	if err != nil {
-		log.Printf("Failed to retrieve %s for %s: %s", resourceType, track, err)
+		logger.Warn("Failed to retrieve %s for %s: %s", resourceType, track, err)
 		return err
 	}
 

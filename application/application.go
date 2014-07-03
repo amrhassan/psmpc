@@ -2,10 +2,12 @@ package application
 
 import (
 	"github.com/amrhassan/psmpc/gui"
+	"github.com/amrhassan/psmpc/logging"
 	"github.com/amrhassan/psmpc/mpd"
-	"log"
 	"time"
 )
+
+var logger = logging.New("app")
 
 type Application struct {
 	gui           *gui.GUI
@@ -37,21 +39,21 @@ func (this *Application) runGui() {
 	this.gui.RegisterActionHandler(gui.ACTION_PLAYPAUSE, func(args []interface{}) {
 		err := this.player.PlayPause()
 		if err != nil {
-			log.Fatalf("Failed to playpause: %v", err)
+			logger.Fatal("Failed to playpause: %v", err)
 		}
 	})
 
 	this.gui.RegisterActionHandler(gui.ACTION_NEXT, func(args []interface{}) {
 		err := this.player.Next()
 		if err != nil {
-			log.Fatalf("Failed to next: %v", err)
+			logger.Fatal("Failed to next: %v", err)
 		}
 	})
 
 	this.gui.RegisterActionHandler(gui.ACTION_PREVIOUS, func(args []interface{}) {
 		err := this.player.Previous()
 		if err != nil {
-			log.Fatalf("Failed to previous: %v", err)
+			logger.Fatal("Failed to previous: %v", err)
 		}
 	})
 
@@ -77,12 +79,12 @@ func (this *Application) Run() {
 		time.Sleep(1 * time.Second)
 	}
 
-	log.Println("Bye")
+	logger.Info("Bye")
 }
 
 func (this *Application) updateGui() {
 
-	log.Printf("About to update the GUI")
+	logger.Debug("About to update the GUI")
 
 	current_song, _ := this.player.GetCurrentSong()
 	status, _ := this.player.GetStatus()

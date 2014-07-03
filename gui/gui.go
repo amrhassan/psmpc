@@ -9,15 +9,17 @@ import "C"
 import (
 	"container/list"
 	"fmt"
+	"github.com/amrhassan/psmpc/logging"
 	"github.com/amrhassan/psmpc/mpdinfo"
 	"github.com/amrhassan/psmpc/resources"
 	"github.com/conformal/gotk3/gdk"
 	"github.com/conformal/gotk3/glib"
 	"github.com/conformal/gotk3/gtk"
-	"log"
 	"os"
 	"unsafe"
 )
+
+var logger = logging.New("gui")
 
 /*
  * The paths where the static resources are looked up from. The paths are tried in the order
@@ -92,13 +94,13 @@ func get_static_resource_path(resourceName string) string {
 	for _, path := range static_resource_file_paths {
 		full_path := path + "/gui/" + resourceName
 		if path_exists(full_path) {
-			log.Printf("Using %s file from: %s", resourceName, full_path)
+			logger.Info("Using %s file from: %s", resourceName, full_path)
 			staticResources[resourceName] = full_path
 			return full_path
 		}
 	}
 
-	log.Panicf("Can't find %s file", resourceName)
+	logger.Fatal("Can't find %s file", resourceName)
 	return ""
 }
 
@@ -175,7 +177,7 @@ func (this *GUI) Run() {
 	})
 
 	this.status_icon.Connect("activate", func() {
-		log.Println("Status Icon clicked!")
+		logger.Debug("Status Icon clicked!")
 		this.main_window.SetVisible(!this.main_window.GetVisible())
 	})
 
@@ -212,7 +214,7 @@ type key struct {
 
 // Extracts a key instance from the GdkEventKey wrapped in the given gdk.Event
 func extract_key_from_gdk_event(gdk_key_event *gdk.Event) key {
-	log.Printf("Extracting pressed key")
+	logger.Debug("Extracting pressed key")
 	value := (*C.GdkEventKey)(unsafe.Pointer(gdk_key_event.Native())).keyval
 	repr := (*C.char)(C.gdk_keyval_name(value))
 	return key{
@@ -235,7 +237,7 @@ func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 		return
 	}
 
-	log.Printf("Updating current song: %v", current_song)
+	logger.Info("Updating current song: %v", current_song)
 	this.currentSong = current_song
 
 	executeInGlibLoop(func() {
@@ -257,7 +259,7 @@ func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 		album_art_fp, err :=
 			this.resourceManager.GetResourceAsFilePath(&resources.Track{current_song}, resources.ALBUM_ART)
 		if err != nil {
-			log.Println("Failed to get album art for %s", current_song)
+			logger.Warn("Failed to get album art for %s", current_song)
 		} else {
 			executeInGlibLoop(func() {
 				this.album_art_image.SetFromFile(album_art_fp)
@@ -270,13 +272,13 @@ func (this *GUI) UpdateCurrentSong(current_song *mpdinfo.CurrentSong) {
 func executeInGlibLoop(code func()) {
 	_, err := glib.IdleAdd(code)
 	if err != nil {
-		log.Fatal("Failed to do glib.IdleAdd()")
+		logger.Fatal("Failed to do glib.IdleAdd()")
 	}
 }
 
 // Updates the GUI with the current MPD status
 func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
-	log.Printf("Updating current status: %v", current_status)
+	logger.Info("Updating current status: %v", current_status)
 	_, err := glib.IdleAdd(func() {
 		switch current_status.State {
 
@@ -304,27 +306,27 @@ func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 	})
 
 	if err != nil {
-		log.Fatal("Failed to do glib.IdleAdd()")
+		logger.Fatal("Failed to do glib.IdleAdd()")
 	}
 }
 
 // Fires the action specified by the given Action, passing the given arguments to all the
 // subscribed handlers
 func (this *GUI) fireAction(action_type Action, args ...interface{}) {
-	log.Printf("Firing action %v", action_type)
+	logger.Debug("Firing action %v", action_type)
 
 	handlers, any := this.registered_action_handlers[action_type]
 
 	if any == false {
 		// None are registered
-		log.Println("No action handlers found")
+		logger.Debug("No action handlers found")
 		return
 	}
 
-	log.Println("Handlers found ", handlers)
+	logger.Debug("Handlers found ", handlers)
 
 	for e := handlers.Front(); e != nil; e = e.Next() {
-		log.Println("Executing handler", e.Value)
+		logger.Debug("Executing handler", e.Value)
 		handler := e.Value.(ActionHandler)
 		go handler(args)
 	}

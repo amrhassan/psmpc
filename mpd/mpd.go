@@ -4,9 +4,11 @@ import (
 	"code.google.com/p/gompd/mpd"
 	"container/list"
 	"errors"
+	"github.com/amrhassan/psmpc/logging"
 	"github.com/amrhassan/psmpc/mpdinfo"
-	"log"
 )
+
+var logger = logging.New("mpd")
 
 type Player struct {
 	hostname       string
@@ -49,9 +51,9 @@ func (this *Player) Connect() error {
 
 	go func() {
 		for event := range watcher.Event {
-			log.Println("Got MPD event:", event)
+			logger.Debug("Got MPD event:", event)
 			for e := this.changeHandlers.Front(); e != nil; e = e.Next() {
-				log.Println("Notifying change handler:", e.Value)
+				logger.Debug("Notifying change handler:", e.Value)
 				e.Value.(ChangeHandler)()
 			}
 		}
