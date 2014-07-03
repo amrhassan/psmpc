@@ -290,6 +290,7 @@ func (this *GUI) UpdateCurrentStatus(current_status *mpdinfo.Status) {
 			this.main_window.SetTitle("psmpc")
 			this.status_icon.SetTooltipText("psmpc")
 			this.album_art_image.SetFromFile(get_static_resource_path("album.png"))
+			this.currentSong = nil
 
 		case mpdinfo.STATE_PLAYING:
 			this.controls_box.Show()

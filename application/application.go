@@ -4,6 +4,7 @@ import (
 	"github.com/amrhassan/psmpc/gui"
 	"github.com/amrhassan/psmpc/logging"
 	"github.com/amrhassan/psmpc/mpd"
+	"github.com/amrhassan/psmpc/mpdinfo"
 	"time"
 )
 
@@ -89,11 +90,11 @@ func (this *Application) updateGui() {
 	current_song, _ := this.player.GetCurrentSong()
 	status, _ := this.player.GetStatus()
 
-	if current_song != nil {
-		this.gui.UpdateCurrentSong(current_song)
-	}
-
 	if status != nil {
 		this.gui.UpdateCurrentStatus(status)
+	}
+
+	if status.State != mpdinfo.STATE_STOPPED && current_song != nil {
+		this.gui.UpdateCurrentSong(current_song)
 	}
 }
