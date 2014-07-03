@@ -72,7 +72,7 @@ func (this *ResourceManager) GetResourceAsFilePath(track *Track, resourceType Re
 	resourceStream, err := this.getResourceFromProvider(track, resourceType)
 
 	if err != nil {
-		log.Println("Failed to get resource %s for %s: %s", resourceType, track, err)
+		log.Printf("Failed to get resource %s for %s: %s", resourceType, track, err)
 		return "", ResourceNotFound
 	}
 

@@ -50,7 +50,7 @@ func (this *LastFMAlbumArtProvider) getAlbumImageUrl(artist string, album string
 	}
 
 	albumImages := albumInfo.Images
-	imageUrl := albumImages[len(albumImages)-1].Url
+	imageUrl := albumImages[2].Url
 
 	response, err := http.Get(imageUrl)
 
@@ -71,7 +71,7 @@ func (this *LastFMAlbumArtProvider) getTrackImageUrl(artist string, title string
 	}
 
 	albumImages := trackInfo.Album.Images
-	imageUrl := albumImages[len(albumImages)-1].Url
+	imageUrl := albumImages[2].Url
 
 	response, err := http.Get(imageUrl)
 

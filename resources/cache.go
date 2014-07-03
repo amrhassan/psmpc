@@ -56,8 +56,21 @@ func (this *ResourceCache) Get(track *Track, resourceType ResourceType) (string,
 }
 
 func (this *ResourceCache) Has(track *Track, resourceType ResourceType) bool {
-	// TODO
-	return false
+	resourcePath, err := this.resourcePath(track, resourceType)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	_, err = os.Stat(resourcePath)
+	if os.IsNotExist(err) {
+		return false
+	} else if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return true
 }
 
 func (this *ResourceCache) Set(track *Track, resourceType ResourceType, resourceStream io.ReadCloser) error {
