@@ -124,21 +124,25 @@ func (this *Player) GetStatus() (*mpdinfo.Status, error) {
 		return nil, err
 	}
 
-	time := strings.Split(status["time"], ":")
-	elapsed, err := strconv.ParseFloat(time[0], 32)
-	if err != nil {
-		logger.Warn("Failed to parse the value of the elapsed song time: %s", time[0])
-		elapsed = 0.0
-	}
-	totalTime, err := strconv.ParseFloat(time[1], 32)
-	if err != nil {
-		logger.Warn("Failed to parse the value of the total song length: %s", time[1])
-		totalTime = 1.0
+	songProgress := 0.0
+	if status["time"] != "" {
+		time := strings.Split(status["time"], ":")
+		elapsed, err := strconv.ParseFloat(time[0], 32)
+		if err != nil {
+			logger.Warn("Failed to parse the value of the elapsed song time: %s", time[0])
+			elapsed = 0.0
+		}
+		totalTime, err := strconv.ParseFloat(time[1], 32)
+		if err != nil {
+			logger.Warn("Failed to parse the value of the total song length: %s", time[1])
+			totalTime = 1.0
+		}
+		songProgress = elapsed / totalTime
 	}
 
 	return &mpdinfo.Status{
 		State:        mpdinfo.State(status["state"]),
-		SongProgress: elapsed / totalTime,
+		SongProgress: songProgress,
 	}, nil
 }
 
