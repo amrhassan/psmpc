@@ -16,6 +16,10 @@ type LastFMAlbumArtProvider struct {
 	api *lastfm.Api
 }
 
+func (this *LastFMAlbumArtProvider) String() string {
+	return "Last.fm"
+}
+
 func newLastFMAlbumArtProvider() *LastFMAlbumArtProvider {
 	return &LastFMAlbumArtProvider{
 		api: lastfm.New(apiKey, ""),
@@ -54,6 +58,11 @@ func (this *LastFMAlbumArtProvider) getAlbumImageUrl(artist string, album string
 
 	response, err := http.Get(imageUrl)
 
+	if err != nil {
+		logger.Warn("Last.fm: %s", err)
+		return nil, err
+	}
+
 	return response.Body, err
 }
 
@@ -74,6 +83,11 @@ func (this *LastFMAlbumArtProvider) getTrackImageUrl(artist string, title string
 	imageUrl := albumImages[2].Url
 
 	response, err := http.Get(imageUrl)
+
+	if err != nil {
+		logger.Warn("Last.fm: %s", err)
+		return nil, err
+	}
 
 	return response.Body, err
 }

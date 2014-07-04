@@ -33,4 +33,6 @@ type ResourceProvider interface {
 
 	// This should return the binary version of the resource
 	GetResource(track *Track) (io.ReadCloser, error)
+
+	String() string
 }
