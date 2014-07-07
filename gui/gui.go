@@ -181,7 +181,9 @@ func (this *GUI) Run() {
 
 	this.status_icon.Connect("activate", func() {
 		logger.Debug("Status Icon clicked!")
-		this.main_window.SetVisible(!this.main_window.GetVisible())
+		this.main_window.Show()
+
+		this.main_window.SetUrgencyHint(true)
 	})
 
 	this.playpause_button.Connect("clicked", func() {
