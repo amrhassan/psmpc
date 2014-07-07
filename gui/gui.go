@@ -198,10 +198,14 @@ func (this *GUI) Run() {
 
 	this.main_window.Connect("key-release-event", func(window *gtk.Window, event *gdk.Event) {
 		key := extract_key_from_gdk_event(event)
+		logger.Debug("Key press: %v", key)
+
 		action, mapped := this.buttonKeyMap[key.value]
 
 		if mapped {
 			this.fireAction(action)
+		} else if key.value == 65307 {
+			this.main_window.Hide()
 		}
 	})
 
@@ -215,9 +219,12 @@ type key struct {
 	representation string
 }
 
+func (this *key) String() string {
+	return fmt.Sprintf("key{%d, %s}", this.value, this.representation)
+}
+
 // Extracts a key instance from the GdkEventKey wrapped in the given gdk.Event
 func extract_key_from_gdk_event(gdk_key_event *gdk.Event) key {
-	logger.Debug("Extracting pressed key")
 	value := (*C.GdkEventKey)(unsafe.Pointer(gdk_key_event.Native())).keyval
 	repr := (*C.char)(C.gdk_keyval_name(value))
 	return key{
